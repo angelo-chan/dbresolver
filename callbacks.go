@@ -40,7 +40,10 @@ func (dr *DBResolver) switchGuess(db *gorm.DB) {
 	if !isTransaction(db.Statement.ConnPool) {
 		if _, ok := db.Statement.Clauses[writeName]; ok {
 			db.Statement.ConnPool = dr.resolve(db.Statement, Write)
-		} else if rawSQL := strings.TrimSpace(db.Statement.SQL.String()); len(rawSQL) > 10 && strings.EqualFold(rawSQL[:6], "select") && !strings.EqualFold(rawSQL[len(rawSQL)-10:], "for update") {
+		} else if rawSQL := strings.TrimSpace(db.Statement.SQL.String()); len(rawSQL) > 10 &&
+			((strings.EqualFold(rawSQL[:6], "select") && !strings.EqualFold(rawSQL[len(rawSQL)-10:], "for update")) ||
+				// this is just a workaround
+				strings.EqualFold(rawSQL[:4], "with")) {
 			db.Statement.ConnPool = dr.resolve(db.Statement, Read)
 		} else {
 			db.Statement.ConnPool = dr.resolve(db.Statement, Write)
